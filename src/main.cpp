@@ -127,7 +127,7 @@ VisInit ()
 int main()
 {    
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::io::loadPCDFile ("../data/aspara_real.pcd", *cloud);
+    pcl::io::loadPCDFile ("../data/two.pcd", *cloud);
     cloud = removeNan(cloud);
     
    pcl::ConditionAnd<pcl::PointXYZ>::Ptr range_cond (new pcl::ConditionAnd<pcl::PointXYZ> ());
@@ -142,7 +142,6 @@ int main()
     condrem.filter (*cloud);
     cloud = removeNan(cloud);    
 
-/*
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_vg (new pcl::PointCloud<pcl::PointXYZ>);
     vector<bool> is_inlier;
     std::chrono::system_clock::time_point  start, end; // 型は auto で可
@@ -164,9 +163,10 @@ int main()
     dbs.getResult(label,num_cluster);    
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_color (new pcl::PointCloud<pcl::PointXYZRGB>);
     addRGBtoPointCloudWithLabel(cloud, label, num_cluster, cloud_color);    
-*/
 
-  std::chrono::system_clock::time_point  start, end; // 型は auto で可
+  
+/*
+std::chrono::system_clock::time_point  start, end; // 型は auto で可
   start = std::chrono::system_clock::now(); // 計測開始時間
 
   pcl::search::Search<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
@@ -193,6 +193,9 @@ int main()
   double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count(); //処理に要した時間をミリ秒に変換
   cout << "elapsed:" << elapsed << endl;
   pcl::PointCloud <pcl::PointXYZRGB>::Ptr cloud_color = reg.getColoredCloud ();
+*/
+
+  
 
     boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = VisInit();
     pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> inlier_rgb(cloud_color);
