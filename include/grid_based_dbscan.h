@@ -33,7 +33,7 @@ class GridBasedDBSCAN{
     double min_x,max_x,min_y,max_y,min_z,max_z;
     double epsilon;
     int minPts;
-    int grid_size;
+    int grid_size_x, grid_size_y, grid_size_z;
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
     std::multimap<int64_t, int> map_hash2pointidx;
     std::unordered_map<int64_t, int> hashmap_of_notempty_grid; //for fast decision whether voxel is empty or not

@@ -64,7 +64,9 @@ GridBasedDBSCAN::generateVoxelGridHash()
 {
     hashmap_of_notempty_grid.reserve(cloud->points.size());
     hashlist_of_notempty_grid.reserve(cloud->points.size());
-    grid_size = std::floor((max_x-min_x)/epsilon); //assume (max_x-min_x) == (max_y-min_y) == (max_z-min_z)
+    grid_size_x = std::floor((max_x-min_x)/epsilon);
+    grid_size_y = std::floor((max_y-min_y)/epsilon);
+    grid_size_z = std::floor((max_z-min_z)/epsilon);
 
     std::vector<boost::tuple<int, int64_t>> index_hash_tuple_list;
     index_hash_tuple_list.resize(cloud->points.size());
@@ -79,7 +81,7 @@ GridBasedDBSCAN::generateVoxelGridHash()
             index_hash_tuple_list[i] = boost::make_tuple(i,-1);
             continue;
         }
-        if(x > 1.0|| y>1.0 || z>1.0 ||x < 0.0 || y < 0.0 || z < 0.0 )
+        if(x > max_x-min_x|| y>max_y-min_y || z>max_z-min_z ||x < 0.0 || y < 0.0 || z < 0.0 )
         {
             index_hash_tuple_list[i] = boost::make_tuple(i,-1); 
             continue;
@@ -87,7 +89,7 @@ GridBasedDBSCAN::generateVoxelGridHash()
         int64_t x_int = std::floor(x/epsilon);
         int64_t y_int = std::floor(y/epsilon);
         int64_t z_int = std::floor(z/epsilon);
-        int64_t hash = x_int + y_int*grid_size + z_int*grid_size*grid_size;
+        int64_t hash = x_int + y_int*grid_size_x + z_int*grid_size_x*grid_size_y;
         //map_hash2pointidx.insert(std::pair<int64_t, int>(hash, i));
         //std::unordered_map<int64_t, int>::iterator it = hashmap_of_notempty_grid.find(hash);
         index_hash_tuple_list[i] = boost::make_tuple(i,hash);         
@@ -143,9 +145,9 @@ GridBasedDBSCAN::generateNearestNeighborIdx()
     for(int it_idx=0;it_idx<hash_list.size();it_idx++){
         //int64_t hash_point = *it;
         int64_t hash_point = hash_list[it_idx];
-        int64_t z_int = hash_point / (grid_size*grid_size);
-        int64_t y_int = (hash_point- z_int*grid_size*grid_size) / grid_size;
-        int64_t x_int = (hash_point- z_int*grid_size*grid_size -y_int*grid_size);
+        int64_t z_int = hash_point / (grid_size_x*grid_size_y);
+        int64_t y_int = (hash_point- z_int*grid_size_x*grid_size_y) / grid_size_x;
+        int64_t x_int = (hash_point- z_int*grid_size_x*grid_size_y -y_int*grid_size_x);
 
         for(int i=0;i<dxyz_tuple_list.size();i++){
             boost::tuple<int64_t,int64_t,int64_t> dxyz_tuple = dxyz_tuple_list[i];
@@ -160,10 +162,10 @@ GridBasedDBSCAN::generateNearestNeighborIdx()
             int64_t y_int_kernel = y_int + dy;
             int64_t z_int_kernel = z_int + dz;
 
-            if(x_int_kernel <0 || x_int_kernel >=grid_size)continue;
-            if(y_int_kernel <0 || y_int_kernel >=grid_size)continue;
-            if(z_int_kernel <0 || z_int_kernel >=grid_size)continue;
-            int64_t hash_kernel = x_int_kernel + y_int_kernel*grid_size + z_int_kernel*grid_size*grid_size;
+            if(x_int_kernel <0 || x_int_kernel >=grid_size_x)continue;
+            if(y_int_kernel <0 || y_int_kernel >=grid_size_y)continue;
+            if(z_int_kernel <0 || z_int_kernel >=grid_size_z)continue;
+            int64_t hash_kernel = x_int_kernel + y_int_kernel*grid_size_x + z_int_kernel*grid_size_x*grid_size_y;
             auto _it = hashmap_of_notempty_grid.find(hash_kernel); 
             if(_it != hashmap_of_notempty_grid.end()){
     //            #pragma omp critical
@@ -216,16 +218,16 @@ GridBasedDBSCAN::testVoxelCentroid(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_vg,
     for(auto it=hashlist_of_notempty_grid.begin(), it_end=hashlist_of_notempty_grid.end(); it!=it_end;++it){    
         pcl::PointXYZ point;
         int64_t hash = *it;
-        int64_t z_int = hash / (grid_size*grid_size);
-        int64_t y_int = (hash- z_int*grid_size*grid_size) / grid_size;
-        int64_t x_int = (hash- z_int*grid_size*grid_size -y_int*grid_size);
+        int64_t z_int = hash / (grid_size_x*grid_size_y);
+        int64_t y_int = (hash- z_int*grid_size_x*grid_size_y) / grid_size_x;
+        int64_t x_int = (hash- z_int*grid_size_x*grid_size_y -y_int*grid_size_x);
         point.x = double(x_int)*epsilon + min_x + epsilon/2;
         point.y = double(y_int)*epsilon + min_y + epsilon/2;
         point.z = double(z_int)*epsilon + min_z + epsilon/2;
         double x = point.x - min_x ; 
         double y = point.y - min_y ;
         double z = point.z - min_z ;
-        if(x > 1.0|| y>1.0 || z>1.0 ||x < 0.0 || y < 0.0 || z < 0.0 ){
+        if(x > max_x-min_x|| y>max_y-min_y || z>max_z-min_z ||x < 0.0 || y < 0.0 || z < 0.0 ){
             continue;
         }
         cloud_vg->points.push_back(point);
@@ -361,7 +363,7 @@ GridBasedDBSCAN::getResult(vector<int> &label,  int &cluster_num)
             label.push_back(0);
             continue;
         }
-        if(x > 1.0|| y>1.0 || z>1.0 ||x < 0.0 || y < 0.0 || z < 0.0 ){
+        if(x > max_x-min_x|| y>max_y-min_y || z>max_z-min_z ||x < 0.0 || y < 0.0 || z < 0.0 ){
             label.push_back(0);
             continue;
         }
@@ -369,7 +371,7 @@ GridBasedDBSCAN::getResult(vector<int> &label,  int &cluster_num)
         int64_t x_int = std::floor(x/epsilon);
         int64_t y_int = std::floor(y/epsilon);
         int64_t z_int = std::floor(z/epsilon);
-        int64_t hash = x_int + y_int*grid_size + z_int*grid_size*grid_size;
+        int64_t hash = x_int + y_int*grid_size_x + z_int*grid_size_x*grid_size_y;
         int64_t label_hash = map_hash2label.at(hash);
         int cluster_label = map_label_unique.at(label_hash);
         label.push_back(cluster_label);

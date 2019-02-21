@@ -127,14 +127,14 @@ VisInit ()
 int main()
 {    
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::io::loadPCDFile ("../data/two.pcd", *cloud);
+    pcl::io::loadPCDFile ("../data/test_data.pcd", *cloud);
     cloud = removeNan(cloud);
     
    pcl::ConditionAnd<pcl::PointXYZ>::Ptr range_cond (new pcl::ConditionAnd<pcl::PointXYZ> ());
    range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr 
     (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, 0)));
    range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr 
-    (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, 0.9)));    
+    (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, 1.2)));    
     pcl::ConditionalRemoval<pcl::PointXYZ> condrem;
     condrem.setCondition (range_cond);
     condrem.setInputCloud (cloud);
@@ -147,7 +147,7 @@ int main()
     std::chrono::system_clock::time_point  start, end; // 型は auto で可
 
     start = std::chrono::system_clock::now(); // 計測開始時間                
-    GridBasedDBSCAN dbs(0.01, 10, -0.5, 0.5, -0.4, 0.6, 0.0, 1.0);
+    GridBasedDBSCAN dbs(0.01, 10, -1.0, 1.0, -1.0, 1.0, 0.0, 1.5);
     dbs.setPointCloud(cloud);
     dbs.runConditionalFilter();
     dbs.generateVoxelGridHash();
@@ -163,7 +163,6 @@ int main()
     dbs.getResult(label,num_cluster);    
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_color (new pcl::PointCloud<pcl::PointXYZRGB>);
     addRGBtoPointCloudWithLabel(cloud, label, num_cluster, cloud_color);    
-
   
 /*
 std::chrono::system_clock::time_point  start, end; // 型は auto で可
